@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // URL do backend via variável de ambiente
 // Fallback para localhost durante desenvolvimento
-const baseURL = import.meta.env.VITE_API_URL ?? 'http://localhost:3333';
+const baseURL = import.meta.env.VITE_API_URL ?? 'https://projeto-api-c4qy.onrender.com';
 
 export const api = axios.create({
   baseURL,
