@@ -11,13 +11,11 @@ const app: Application = express();
 
 // ==================== MIDDLEWARES ====================
 
-// Libera CORS para o front-end
-app.use(
-  cors({
-    origin: "http://localhost:5173",
-    credentials: true,
-  })
-);
+// Libera CORS apenas para o frontend do Render
+app.use(cors({
+  origin: "https://projeto-extensionista-frontend.onrender.com",
+  credentials: true,
+}));
 
 // Permite que o Express leia JSON no corpo das requisições
 app.use(express.json());
@@ -31,5 +29,9 @@ app.use("/api/login", loginRoutes);
 
 // ==================== SWAGGER ====================
 setupSwagger(app); // registra o Swagger para todas as rotas
+
+// ==================== HEALTH CHECK ====================
+// Opcional: para testar se o backend está vivo
+app.get("/health", (_req, res) => res.json({ status: "ok" }));
 
 export default app;

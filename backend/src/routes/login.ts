@@ -1,7 +1,7 @@
 import { Router, Request, Response } from "express";
 import { PrismaClient, Secretario, Extensionista } from "@prisma/client";
 import { loginSchema } from "../schemas/login"; // Zod
-import bcrypt from "bcrypt"; // se quiser usar hash
+import bcrypt from "bcrypt"; // para futura hash de senha
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -66,7 +66,7 @@ interface UsuarioResponse {
  */
 router.post("/", async (req: Request, res: Response) => {
   try {
-    // Valida corpo da requisição
+    // Valida corpo da requisição com Zod
     const loginData = loginSchema.parse(req.body);
 
     // Busca usuário no secretário
@@ -90,11 +90,15 @@ router.post("/", async (req: Request, res: Response) => {
     }
 
     // Verifica senha
-    if ("senha" in usuario && usuario.senha !== loginData.senha) {
+    // Se futuramente quiser usar hash, basta trocar:
+    // const senhaValida = await bcrypt.compare(loginData.senha, usuario.senha)
+    const senhaValida = "senha" in usuario ? usuario.senha === loginData.senha : false;
+
+    if (!senhaValida) {
       return res.status(401).json({ error: "Senha incorreta" });
     }
 
-    // Retorna objeto para front sem senha, com role
+    // Retorna objeto sem senha, com role
     const usuarioResponse: UsuarioResponse = {
       id: usuario.id,
       nome: usuario.nome,
@@ -109,7 +113,7 @@ router.post("/", async (req: Request, res: Response) => {
     if (err.name === "ZodError") {
       return res.status(400).json({ error: err.errors });
     }
-    console.error(err);
+    console.error("Erro interno no servidor:", err);
     return res.status(500).json({ error: "Erro interno no servidor" });
   }
 });
