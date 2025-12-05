@@ -1,7 +1,12 @@
-import { Router } from 'express';
-import { prisma } from '../prismaClient';
-import { validateBody } from '../middleware/validate';
-import { createProjetoSchema, updateProjetoSchema } from '../schemas/projeto';
+import { Router, Request, Response, NextFunction } from "express";
+import { prisma } from "../prismaClient";
+import { validateBody } from "../middlewares/validate"; // ajuste do caminho
+import { createProjetoSchema, updateProjetoSchema } from "../schemas/projeto";
+
+// Define um tipo para req.body
+interface RequestWithBody<T = any> extends Request {
+  body: T;
+}
 
 const router = Router();
 
@@ -22,7 +27,7 @@ const router = Router();
  *       200:
  *         description: Lista de projetos retornada
  */
-router.get('/', async (_req, res) => {
+router.get("/", async (_req: Request, res: Response) => {
   const all = await prisma.projeto.findMany();
   res.json(all);
 });
@@ -45,14 +50,14 @@ router.get('/', async (_req, res) => {
  *       404:
  *         description: Projeto não encontrado
  */
-router.get('/:id', async (req, res) => {
+router.get("/:id", async (req: Request, res: Response) => {
   const id = Number(req.params.id);
   const item = await prisma.projeto.findUnique({
     where: { id },
     include: { pontos: true },
   });
 
-  if (!item) return res.status(404).json({ error: 'Not found' });
+  if (!item) return res.status(404).json({ error: "Not found" });
   res.json(item);
 });
 
@@ -75,10 +80,14 @@ router.get('/:id', async (req, res) => {
  *       201:
  *         description: Projeto criado com sucesso
  */
-router.post('/', validateBody(createProjetoSchema), async (req, res) => {
-  const created = await prisma.projeto.create({ data: req.body });
-  res.status(201).json(created);
-});
+router.post(
+  "/",
+  validateBody(createProjetoSchema),
+  async (req: RequestWithBody, res: Response) => {
+    const created = await prisma.projeto.create({ data: req.body });
+    res.status(201).json(created);
+  }
+);
 
 /**
  * @swagger
@@ -104,15 +113,18 @@ router.post('/', validateBody(createProjetoSchema), async (req, res) => {
  *       404:
  *         description: Projeto não encontrado
  */
-router.put('/:id', validateBody(updateProjetoSchema), async (req, res) => {
-  const id = Number(req.params.id);
-  const updated = await prisma.projeto.update({
-    where: { id },
-    data: req.body,
-  });
-
-  res.json(updated);
-});
+router.put(
+  "/:id",
+  validateBody(updateProjetoSchema),
+  async (req: RequestWithBody, res: Response) => {
+    const id = Number(req.params.id);
+    const updated = await prisma.projeto.update({
+      where: { id },
+      data: req.body,
+    });
+    res.json(updated);
+  }
+);
 
 /**
  * @swagger
@@ -130,7 +142,7 @@ router.put('/:id', validateBody(updateProjetoSchema), async (req, res) => {
  *       204:
  *         description: Projeto deletado com sucesso
  */
-router.delete('/:id', async (req, res) => {
+router.delete("/:id", async (req: Request, res: Response) => {
   const id = Number(req.params.id);
   await prisma.projeto.delete({ where: { id } });
   res.status(204).send();

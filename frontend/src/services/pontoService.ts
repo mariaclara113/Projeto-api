@@ -5,7 +5,7 @@ export const getPontos = async (params?: any) => {
   return res.data;
 };
 
-export const createPonto = async (data: any) => {
+export const CreatePonto = async (data: any) => {
   const res = await api.post("/api/pontos", data);
   return res.data;
 };

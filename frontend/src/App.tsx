@@ -1,17 +1,10 @@
+// src/App.tsx
+import { ThemeProvider, CssBaseline, createTheme } from "@mui/material";
 import { useState } from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import { ThemeProvider, createTheme, CssBaseline } from "@mui/material";
-
-// Componente de troca de tema
+import Routes from "./routes"; // default export
 import ThemeToggleFloating from "./components/ThemeToggleFloating";
 
-// Páginas
-import Login from "./pages/login";
-import { ProjetosPage } from "./pages/projetos";
-import { ExtensionistasPage } from "./pages/extensionistas";
-import { PontosPage } from "./pages/pontos";
-
-function App() {
+export default function App() {
   const [mode, setMode] = useState<"light" | "dark">("light");
 
   const theme = createTheme({ palette: { mode } });
@@ -22,20 +15,12 @@ function App() {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <ThemeToggleFloating toggleColorMode={toggleColorMode} mode={mode} />
-      <Router>
-        <Routes>
-          {/* Rotas públicas */}
-          <Route path="/" element={<Login />} />
 
-          {/* Rotas privadas */}
-          <Route path="/projetos" element={<ProjetosPage />} />
-          <Route path="/extensionistas" element={<ExtensionistasPage />} />
-          <Route path="/pontos" element={<PontosPage />} />
-        </Routes>
-      </Router>
+      {/* Botão flutuante para alternar tema */}
+      <ThemeToggleFloating toggleColorMode={toggleColorMode} mode={mode} />
+
+      {/* Apenas renderiza as rotas */}
+      <Routes />
     </ThemeProvider>
   );
 }
-
-export default App;

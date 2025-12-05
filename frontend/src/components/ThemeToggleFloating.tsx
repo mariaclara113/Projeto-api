@@ -1,4 +1,4 @@
-import { Fab, useTheme } from "@mui/material";
+import { Fab } from "@mui/material";
 import { Brightness4, Brightness7 } from "@mui/icons-material";
 
 interface ThemeToggleFloatingProps {
@@ -7,8 +7,6 @@ interface ThemeToggleFloatingProps {
 }
 
 const ThemeToggleFloating = ({ toggleColorMode, mode }: ThemeToggleFloatingProps) => {
-  const theme = useTheme();
-
   return (
     <Fab
       color="primary"

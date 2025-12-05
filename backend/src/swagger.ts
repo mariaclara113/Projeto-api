@@ -1,25 +1,23 @@
-// src/swagger.ts
-import swaggerJsdoc from "swagger-jsdoc";
 import swaggerUi from "swagger-ui-express";
-import { Express } from "express";
+import swaggerJsdoc from "swagger-jsdoc";
+import type { Application } from "express";
 
-const options = {
-  definition: {
-    openapi: "3.0.0",
-    info: {
-      title: "API de Ponto Extensionista",
-      version: "1.0.0",
-      description: "Documentação da API de Ponto Extensionista",
+export const setupSwagger = (app: Application): void => {
+  const options = {
+    definition: {
+      openapi: "3.0.0",
+      info: {
+        title: "API Ponto Extensionista",
+        version: "1.0.0",
+        description: "Documentação da API de Ponto Extensionista",
+      },
     },
-    servers: [
-      { url: "http://localhost:3333" } // porta do seu backend
-    ],
-  },
-  apis: ["./src/routes/*.ts"], // onde estão suas rotas com comentários Swagger
-};
+   apis: ["./src/routes/**/*.ts"],
+ // todas as rotas com comentários Swagger
+  };
 
-const swaggerSpec = swaggerJsdoc(options);
+  const swaggerSpec = swaggerJsdoc(options);
 
-export const setupSwagger = (app: Express) => {
+  // Middleware correto, sem type casting
   app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 };

@@ -1,25 +1,24 @@
-import React, { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback } from "react";
 import {
   Box,
   Paper,
   Typography,
   Button,
   TextField,
-  MenuItem,
   Snackbar,
   Alert,
+  Stack,
 } from "@mui/material";
 import { z } from "zod";
 import { api } from "../api/axiosClient";
-import { createPontoSchema, Createpontos } from "../schemas/pontos";
+import { createProjetoSchema } from "../schemas/projetos";
 
-type Ponto = {
+type CreateProjeto = z.infer<typeof createProjetoSchema>;
+
+type Projeto = {
   id: number;
-  dataHora: string;
-  tipo: "IN" | "OUT";
-  observacao?: string;
-  extensionista?: { id: number; nome: string };
-  projeto?: { id: number; nome: string };
+  nome: string;
+  descricao?: string;
 };
 
 type SnackbarState = {
@@ -28,57 +27,50 @@ type SnackbarState = {
   severity: "success" | "error" | "info" | "warning";
 };
 
-export const PontosPage = () => {
-  const [pontos, setPontos] = useState<Ponto[]>([]);
+export default function ProjetosPage() {
+  const [projetos, setProjetos] = useState<Projeto[]>([]);
   const [loading, setLoading] = useState(false);
   const [formOpen, setFormOpen] = useState(false);
-  const [form, setForm] = useState<Partial<Createpontos>>({});
-  const [filters, setFilters] = useState({
-    extensionistaId: "",
-    projetoId: "",
-    from: "",
-    to: "",
-  });
+  const [form, setForm] = useState<Partial<CreateProjeto>>({});
   const [snackbar, setSnackbar] = useState<SnackbarState>({
     open: false,
     message: "",
     severity: "info",
   });
 
-  const carregarPontos = useCallback(async () => {
+  const carregarProjetos = useCallback(async () => {
     setLoading(true);
     try {
-      const params: any = {};
-      if (filters.extensionistaId) params.extensionistaId = filters.extensionistaId;
-      if (filters.projetoId) params.projetoId = filters.projetoId;
-      if (filters.from) params.from = filters.from;
-      if (filters.to) params.to = filters.to;
-
-      const res = await api.get("/api/pontos", { params });
-      setPontos(res.data);
+      const res = await api.get("/api/projetos");
+      setProjetos(res.data);
     } catch (err) {
       console.error(err);
-      setSnackbar({ open: true, message: "Erro ao carregar pontos.", severity: "error" });
+      setSnackbar({
+        open: true,
+        message: "Erro ao carregar projetos.",
+        severity: "error",
+      });
     } finally {
       setLoading(false);
     }
-  }, [filters]);
+  }, []);
 
   useEffect(() => {
-    carregarPontos();
-  }, [carregarPontos]);
+    carregarProjetos();
+  }, [carregarProjetos]);
 
   const handleCreate = async () => {
     try {
-      const parsed = createPontoSchema.parse({
-        ...form,
-        dataHora: String(form.dataHora),
-      });
-      await api.post("/api/pontos", parsed);
+      const parsed = createProjetoSchema.parse(form);
+      await api.post("/api/projetos", parsed);
       setForm({});
       setFormOpen(false);
-      carregarPontos();
-      setSnackbar({ open: true, message: "Ponto criado com sucesso.", severity: "success" });
+      carregarProjetos();
+      setSnackbar({
+        open: true,
+        message: "Projeto criado com sucesso.",
+        severity: "success",
+      });
     } catch (err: any) {
       if (err instanceof z.ZodError) {
         alert(err.issues.map((i) => i.message).join("\n"));
@@ -89,153 +81,69 @@ export const PontosPage = () => {
   };
 
   const handleDelete = async (id: number) => {
-    if (!confirm("Deletar?")) return;
+    if (!confirm("Deletar este projeto?")) return;
     try {
-      await api.delete(`/api/pontos/${id}`);
-      carregarPontos();
-      setSnackbar({ open: true, message: "Ponto deletado.", severity: "success" });
+      await api.delete(`/api/projetos/${id}`);
+      carregarProjetos();
+      setSnackbar({
+        open: true,
+        message: "Projeto deletado.",
+        severity: "success",
+      });
     } catch (err) {
       console.error(err);
-      setSnackbar({ open: true, message: "Erro ao deletar ponto.", severity: "error" });
+      setSnackbar({
+        open: true,
+        message: "Erro ao deletar projeto.",
+        severity: "error",
+      });
     }
   };
 
-  const exportCsv = () => {
-    const csv = [
-      "id,dataHora,tipo,extensionista,projeto",
-      ...pontos.map(
-        (p) =>
-          `${p.id},"${p.dataHora}","${p.tipo}","${p.extensionista?.nome || ""}","${
-            p.projeto?.nome || ""
-          }"`
-      ),
-    ].join("\n");
-    const blob = new Blob([csv], { type: "text/csv" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "pontos.csv";
-    a.click();
-    URL.revokeObjectURL(url);
-  };
-
   return (
-    <Box display="flex" flexDirection="column" alignItems="center" p={3} minHeight="100vh">
-      <Paper elevation={3} sx={{ width: "100%", maxWidth: 1200, p: 3, borderRadius: 2 }}>
-        <Typography variant="h5" fontWeight={600} mb={3} textAlign="center">
-          Gerenciar Pontos
+    <Box display="flex" flexDirection="column" alignItems="center" p={3} minHeight="100vh" bgcolor="#f5f5f5">
+      <Paper elevation={4} sx={{ width: "100%", maxWidth: 900, p: 3, borderRadius: 2 }}>
+        <Typography
+          variant="h4"
+          fontWeight={700}
+          mb={3}
+          textAlign="center"
+          color="#0D3B66"
+        >
+          Gerenciar Projetos
         </Typography>
 
         {/* Toolbar */}
-        <Box display="flex" gap={2} flexWrap="wrap" mb={3}>
-          <Button variant="contained" onClick={() => setFormOpen(!formOpen)}>
+        <Stack direction="row" spacing={2} mb={3} flexWrap="wrap" justifyContent="center">
+          <Button variant="contained" color="primary" onClick={() => setFormOpen(!formOpen)}>
             {formOpen ? "Fechar" : "Novo"}
           </Button>
-          <Button variant="outlined" onClick={carregarPontos}>
+          <Button variant="outlined" color="secondary" onClick={carregarProjetos}>
             Atualizar
           </Button>
-          <Button variant="outlined" onClick={exportCsv}>
-            Exportar CSV
-          </Button>
-        </Box>
-
-        {/* Filtros */}
-        <Box display="flex" gap={2} flexWrap="wrap" mb={3}>
-          <TextField
-            label="Extensionista ID"
-            type="number"
-            value={filters.extensionistaId}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-              setFilters({ ...filters, extensionistaId: e.target.value })
-            }
-            size="small"
-          />
-          <TextField
-            label="Projeto ID"
-            type="number"
-            value={filters.projetoId}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-              setFilters({ ...filters, projetoId: e.target.value })
-            }
-            size="small"
-          />
-          <TextField
-            label="De"
-            type="date"
-            value={filters.from}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-              setFilters({ ...filters, from: e.target.value })
-            }
-            size="small"
-          />
-          <TextField
-            label="Até"
-            type="date"
-            value={filters.to}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-              setFilters({ ...filters, to: e.target.value })
-            }
-            size="small"
-          />
-          <Button variant="outlined" onClick={carregarPontos}>
-            Aplicar filtros
-          </Button>
-        </Box>
+        </Stack>
 
         {/* Formulário */}
         {formOpen && (
-          <Box display="flex" flexDirection="column" gap={2} mb={3}>
-            <TextField
-              label="Data e hora"
-              type="datetime-local"
-              value={form.dataHora || ""}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                setForm({ ...form, dataHora: e.target.value })
-              }
-              size="small"
-            />
-            <TextField
-              label="Tipo"
-              select
-              value={form.tipo || "IN"}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                setForm({ ...form, tipo: e.target.value as "IN" | "OUT" })
-              }
-              size="small"
-            >
-              <MenuItem value="IN">IN</MenuItem>
-              <MenuItem value="OUT">OUT</MenuItem>
-            </TextField>
-            <TextField
-              label="Observação"
-              value={form.observacao || ""}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                setForm({ ...form, observacao: e.target.value })
-              }
-              size="small"
-            />
-            <TextField
-              label="Extensionista ID"
-              type="number"
-              value={form.extensionistaId || ""}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                setForm({ ...form, extensionistaId: Number(e.target.value) })
-              }
-              size="small"
-            />
-            <TextField
-              label="Projeto ID"
-              type="number"
-              value={form.projetoId || ""}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                setForm({ ...form, projetoId: Number(e.target.value) })
-              }
-              size="small"
-            />
-            <Button variant="contained" onClick={handleCreate}>
-              Salvar
-            </Button>
-          </Box>
+          <Paper elevation={2} sx={{ p: 2, mb: 3, borderRadius: 2, backgroundColor: "#f0f0f0" }}>
+            <Stack spacing={2}>
+              <TextField
+                label="Nome"
+                value={form.nome || ""}
+                onChange={(e) => setForm({ ...form, nome: e.target.value })}
+                size="small"
+              />
+              <TextField
+                label="Descrição"
+                value={form.descricao || ""}
+                onChange={(e) => setForm({ ...form, descricao: e.target.value })}
+                size="small"
+              />
+              <Button variant="contained" color="success" onClick={handleCreate}>
+                Salvar
+              </Button>
+            </Stack>
+          </Paper>
         )}
 
         {/* Tabela */}
@@ -244,24 +152,28 @@ export const PontosPage = () => {
         ) : (
           <Box component="table" width="100%" sx={{ borderCollapse: "collapse" }}>
             <Box component="thead">
-              <Box component="tr">
-                <Box component="th">ID</Box>
-                <Box component="th">Data</Box>
-                <Box component="th">Tipo</Box>
-                <Box component="th">Extensionista</Box>
-                <Box component="th">Projeto</Box>
-                <Box component="th">Ações</Box>
+              <Box component="tr" sx={{ backgroundColor: "#585a5cff", color: "#fff" }}>
+                <Box component="th" sx={{ textAlign: "left", padding: 1 }}>ID</Box>
+                <Box component="th" sx={{ textAlign: "left", padding: 1 }}>Nome</Box>
+                <Box component="th" sx={{ textAlign: "left", padding: 1 }}>Descrição</Box>
+                <Box component="th" sx={{ textAlign: "left", padding: 1 }}>Ações</Box>
               </Box>
             </Box>
+
             <Box component="tbody">
-              {pontos.map((p) => (
-                <Box component="tr" key={p.id}>
-                  <Box component="td">{p.id}</Box>
-                  <Box component="td">{new Date(p.dataHora).toLocaleString()}</Box>
-                  <Box component="td">{p.tipo}</Box>
-                  <Box component="td">{p.extensionista?.nome}</Box>
-                  <Box component="td">{p.projeto?.nome}</Box>
-                  <Box component="td">
+              {projetos.map((p) => (
+                <Box
+                  component="tr"
+                  key={p.id}
+                  sx={{
+                    "&:nth-of-type(even)": { backgroundColor: "#f9f9f9" },
+                    "&:hover": { backgroundColor: "#e3f2fd" },
+                  }}
+                >
+                  <Box component="td" sx={{ padding: 1 }}>{p.id}</Box>
+                  <Box component="td" sx={{ padding: 1 }}>{p.nome}</Box>
+                  <Box component="td" sx={{ padding: 1 }}>{p.descricao}</Box>
+                  <Box component="td" sx={{ padding: 1 }}>
                     <Button color="error" size="small" onClick={() => handleDelete(p.id)}>
                       Excluir
                     </Button>
@@ -272,6 +184,7 @@ export const PontosPage = () => {
           </Box>
         )}
 
+        {/* Snackbar */}
         <Snackbar
           open={snackbar.open}
           autoHideDuration={4000}
@@ -289,4 +202,4 @@ export const PontosPage = () => {
       </Paper>
     </Box>
   );
-};
+}

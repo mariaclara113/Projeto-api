@@ -1,6 +1,6 @@
-import { apic } from "./apic";
+import { api, API_ENDPOINTS } from "./api";
 
-export const login = async (email: string, senha: string) => {
-  const res = await apic.post("/login", { email, senha });
-  return res.data; // retorna dados do usuário
+export const loginService = {
+  login: (email: string, senha: string) =>
+    api.post(API_ENDPOINTS.LOGIN, { email, senha }),
 };

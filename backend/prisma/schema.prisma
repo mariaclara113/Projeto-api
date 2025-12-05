@@ -6,11 +6,14 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
 model Secretario {
   id    Int    @id @default(autoincrement())
   nome  String
   email String @unique
-  senha String
+  senha String  // Adicionado para autenticação
+  role   String  @default("secretario") // novo campo
+  
 }
 
 model Extensionista {
@@ -41,6 +44,6 @@ model Ponto {
   extensionista   Extensionista @relation(fields: [extensionistaId], references: [id])
   extensionistaId Int
 
-  projeto         Projeto?     @relation(fields: [projetoId], references: [id])
+  projeto         Projeto?      @relation(fields: [projetoId], references: [id])
   projetoId       Int?
 }

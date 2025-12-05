@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { prisma } from '../prismaClient';
-import { validateBody } from '../middleware/validate';
+import { validateBody } from '../middlewares/validate';
 import { createPontoSchema, updatePontoSchema } from '../schemas/ponto';
 
 const router = Router();
